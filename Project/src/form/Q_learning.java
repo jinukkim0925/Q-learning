@@ -1,11 +1,16 @@
 package form;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -14,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -21,15 +27,17 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 public class Q_learning extends JFrame implements Runnable {
 
-	JPanel np, sp, cp, cp2, cp3, jp[][] = new JPanel[7][10], ap;
+	JPanel np, np_Control, np_Setting, sp, cp, cp2, cp3, jp[][] = new JPanel[7][10], ap;
 	JButton runQ, stopQ, resetQ, barrier;
 	JCheckBox jc;
-	JLabel cnt, minP;
+	JLabel cnt, minP, jl;
+	JTextField m_StartPointX, m_StartPointY, m_EndPointX, m_EndPointY;
 
 	public static double m_arrexv[][][] = new double[10][7][4]; // up, right, down, left
 	public static int m_x = 0, m_y = 0, m_ch = 0, m_gg = 0, m_minPath = 10000, m_errcnt = 0;
@@ -53,19 +61,30 @@ public class Q_learning extends JFrame implements Runnable {
 			}
 		});
 
-		add(np = new JPanel(), BorderLayout.NORTH);
+		add(np = new JPanel(new BorderLayout()), BorderLayout.NORTH);
 		add(cp = new JPanel(null), BorderLayout.CENTER);
 		add(sp = new JPanel(), BorderLayout.SOUTH);
 
-		np.add(minP = new JLabel("최소 이동 횟수 : 0 번"));
+		np.add(np_Control = new JPanel(), BorderLayout.NORTH);
+		np.add(np_Setting = new JPanel(new FlowLayout(FlowLayout.RIGHT)), BorderLayout.CENTER);
+
+		np_Control.add(minP = new JLabel("최소 이동 횟수 : 0 번"));
 		minP.setFont(new Font("hy견고딕", Font.BOLD, 20));
-		np.add(cnt = new JLabel(" / 이동 횟수 : 0 번"));
+		np_Control.add(cnt = new JLabel(" / 이동 횟수 : 0 번"));
 		cnt.setFont(new Font("hy견고딕", Font.BOLD, 20));
-		np.add(runQ = new JButton("시작"));
-		np.add(stopQ = new JButton("중단"));
-		np.add(jc = new JCheckBox("경로표시"));
-		np.add(barrier = new JButton("랜덤 장벽"));
-		np.add(resetQ = new JButton("초기화"));
+		np_Control.add(runQ = new JButton("시작"));
+		np_Control.add(stopQ = new JButton("중단"));
+		np_Control.add(jc = new JCheckBox("경로표시"));
+		np_Control.add(barrier = new JButton("랜덤 장벽"));
+		np_Control.add(resetQ = new JButton("초기화"));
+		np_Setting.add(jl = new JLabel("시작 위치 X :"));
+		np_Setting.add(m_StartPointX = new JTextField(5));
+		np_Setting.add(jl = new JLabel("Y :"));
+		np_Setting.add(m_StartPointY = new JTextField(5));
+		np_Setting.add(jl = new JLabel("도착 위치 X :"));
+		np_Setting.add(m_EndPointY = new JTextField(5));
+		np_Setting.add(jl = new JLabel("Y :"));
+		np_Setting.add(m_EndPointX = new JTextField(5));
 
 		cp.setBorder(new EmptyBorder(10, 10, 10, 10));
 		Size(cp, 1120, 780);
@@ -76,17 +95,18 @@ public class Q_learning extends JFrame implements Runnable {
 				// TODO Auto-generated method stub
 				if (jc.isSelected()) {
 					for (int l = 0; l < road.size(); l++) {
-						g.fillRect(0, 0, 10, 10);
 						String p1[] = new String[2];
 						String p2[] = road.get(l).split(",");
 						if (l == 0) {
-							p1[0] = "0";
-							p1[1] = "0";
+							p1[0] = Rei(m_StartPointX.getText()) + "";
+							p1[1] = Rei(m_StartPointY.getText()) + "";
 						} else {
 							p1 = road.get(l - 1).split(",");
 						}
-						g.setColor(Color.red);
-						g.drawLine(Rei(p1[0]) * 111 + 50, Rei(p1[1]) * 111 + 50, Rei(p2[0]) * 111 + 50,
+						Graphics2D g2 = (Graphics2D) g;
+						g2.setStroke(new BasicStroke(3));
+						g2.setColor(Color.red);
+						g2.drawLine(Rei(p1[0]) * 111 + 50, Rei(p1[1]) * 111 + 50, Rei(p2[0]) * 111 + 50,
 								Rei(p2[1]) * 111 + 50);
 					}
 				}
@@ -125,7 +145,8 @@ public class Q_learning extends JFrame implements Runnable {
 							Wmsg("길찾기중에는 장벽을 세우지 못합니다.");
 							return;
 						}
-						if (i2 == 0 && j2 == 0 || i2 == jp.length - 1 && j2 == jp[0].length - 1) {
+						if (i2 == Rei(m_StartPointX.getText()) && j2 == Rei(m_StartPointY.getText())
+								|| i2 == Rei(m_EndPointX.getText()) && j2 == Rei(m_EndPointX.getText())) {
 							Wmsg("출발 및 도착 지점에는 장벽을 세우지 못합니다.");
 							return;
 						}
@@ -139,15 +160,50 @@ public class Q_learning extends JFrame implements Runnable {
 			}
 		}
 
-		jp[0][0].setBorder(new LineBorder(Color.red));
-		jp[jp.length - 1][jp[0].length - 1].setBorder(new LineBorder(Color.blue));
+		int setendx = jp.length - 1, setendy = jp[0].length - 1;
+		m_StartPointX.setText("0");
+		m_StartPointY.setText("0");
+		m_EndPointX.setText(setendx + "");
+		m_EndPointY.setText(setendy + "");
+
+		m_StartPointX.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				// TODO Auto-generated method stub
+				StartEndPointPaint();
+			}
+		});
+		m_StartPointY.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				// TODO Auto-generated method stub
+				StartEndPointPaint();
+			}
+		});
+		m_EndPointX.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				// TODO Auto-generated method stub
+				StartEndPointPaint();
+			}
+		});
+		m_EndPointY.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				// TODO Auto-generated method stub
+				StartEndPointPaint();
+			}
+		});
+
+		StartEndPointPaint();
 
 		runQ.addActionListener(e -> { // 강화 학습 시작
 			if (run) {
 				return;
 			}
+			LockTextField();
 			run = true;
-			if (!th.isAlive())
+			if (!th.isAlive()) {
 				for (int i = 0; i < jp.length; i++) {
 					for (int j = 0; j < jp[0].length; j++) {
 						for (int k = 0; k < 4; k++) {
@@ -155,10 +211,15 @@ public class Q_learning extends JFrame implements Runnable {
 						}
 					}
 				}
-			th.start();
+				m_minPath = 10000;
+				m_x = Rei(m_StartPointX.getText());
+				m_y = Rei(m_StartPointY.getText());
+				th.start();
+			}
 		});
 
 		stopQ.addActionListener(e -> { // 강화 학습 중단
+			UnLockTextField();
 			run = false;
 			th = new Thread(this);
 		});
@@ -174,9 +235,8 @@ public class Q_learning extends JFrame implements Runnable {
 				for (int k = 0; k < 6; k++) {
 					int x = r.nextInt(jp.length);
 					int y = r.nextInt(jp[0].length);
-					if (x == 0 && y == 0 || x == jp.length - 1 && y == jp[0].length - 1) {
-						x = r.nextInt(jp.length - 1);
-						y = r.nextInt(jp[0].length - 1);
+					if (x == Rei(m_StartPointX.getText()) && y == Rei(m_StartPointY.getText())
+							|| x == Rei(m_EndPointX.getText()) - 1 && y == Rei(m_EndPointY.getText()) - 1) {
 						k--;
 					} else
 						jp[x][y].setBackground(Color.black);
@@ -187,6 +247,7 @@ public class Q_learning extends JFrame implements Runnable {
 
 		resetQ.addActionListener(e -> { // 리셋
 			run = false;
+			UnLockTextField();
 			for (int i = 0; i < jp.length; i++) {
 				for (int j = 0; j < jp[0].length; j++) {
 					for (int k = 0; k < 4; k++) {
@@ -195,6 +256,11 @@ public class Q_learning extends JFrame implements Runnable {
 				}
 				Arrays.stream(jp[i]).map(x -> (JPanel) x).forEach(x -> x.setBackground(null));
 			}
+			m_StartPointX.setText("0");
+			m_StartPointY.setText("0");
+			m_EndPointX.setText(setendx + "");
+			m_EndPointY.setText(setendy + "");
+			StartEndPointPaint();
 			road.clear();
 			cnt.setText(" / 이동 횟수 : 0 번");
 			minP.setText("최소 이동 횟수 : 0 번");
@@ -210,13 +276,18 @@ public class Q_learning extends JFrame implements Runnable {
 		setVisible(true);
 	}
 
-	boolean Wallcheck(int x, int y) {
-		if (jp[y][x].getBackground() == Color.black) {
-			Wall();
-			return true;
-		} else {
-			return false;
+	void StartEndPointPaint() {
+		for (int i = 0; i < jp.length; i++) {
+			Arrays.stream(jp[i]).map(x -> (JPanel) x).forEach(x -> x.setBorder(new LineBorder(Color.black)));
 		}
+		try {
+			jp[Rei(m_StartPointY.getText())][Rei(m_StartPointX.getText())].setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.red));
+			jp[Rei(m_EndPointX.getText())][Rei(m_EndPointY.getText())].setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.blue));	
+		} catch (Exception e) {
+			// TODO: handle exception
+			Wmsg("올바르지 않은 숫자 입니다.");
+		}
+		revalidate();
 	}
 
 	@Override
@@ -233,12 +304,12 @@ public class Q_learning extends JFrame implements Runnable {
 				}
 			}
 			road.add(m_x + "," + m_y); // 경로 추가(경로 보이기)
-			
+
 			cnt.setText(" / 이동 횟수 : " + road.size() + " 번"); // 건넌 횟수 표시
 
 			if (road.size() >= 2000) { // 오류처리
-				m_x = 0;
-				m_y = 0;
+				m_x = Rei(m_StartPointX.getText());
+				m_y = Rei(m_StartPointY.getText());
 				road.clear();
 				m_errcnt++;
 			}
@@ -247,14 +318,14 @@ public class Q_learning extends JFrame implements Runnable {
 				run = false;
 				th = new Thread(this);
 			}
-			
+
 			Random r = new Random();
 			m_gg = go.get(r.nextInt(go.size()));
 
-			// gg == 0 -> up
-			// gg == 1 -> right
-			// gg == 2 -> down
-			// gg == 3 -> left
+			// m_gg == 0 -> up
+			// m_gg == 1 -> right
+			// m_gg == 2 -> down
+			// m_gg == 3 -> left
 
 			if (m_gg == 0 && m_y == 0)
 				Wall(); // 가장자리 처리
@@ -295,7 +366,7 @@ public class Q_learning extends JFrame implements Runnable {
 			}
 
 			// 도착
-			if (m_y == jp.length - 1 && m_x == jp[0].length - 1) {
+			if (m_y == Rei(m_EndPointX.getText()) && m_x == Rei(m_EndPointY.getText())) {
 				double min = Min();
 
 				switch (m_gg) {
@@ -314,8 +385,8 @@ public class Q_learning extends JFrame implements Runnable {
 				}
 
 				road.add(m_x + "," + m_y);
-				m_x = 0;
-				m_y = 0;
+				m_x = Rei(m_StartPointX.getText());
+				m_y = Rei(m_StartPointY.getText());
 				cnt.setText(" / 이동 횟수 : " + road.size() + " 번");
 				if (m_minPath > road.size()) {
 					minP.setText("최소 이동 횟수 : " + road.size() + " 번");
@@ -391,10 +462,35 @@ public class Q_learning extends JFrame implements Runnable {
 
 	void Wall() { // 벽 확인
 		m_arrexv[m_x][m_y][m_gg] = 1000;
-		m_x = 0;
-		m_y = 0;
+		m_x = Rei(m_StartPointX.getText());
+		m_y = Rei(m_StartPointY.getText());
 		m_ch = 1;
 		road.clear();
+	}
+
+	boolean Wallcheck(int x, int y) { // 장벽 위치 확인
+		if (jp[y][x].getBackground() == Color.black) {
+			Wall();
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void LockTextField() {
+		m_StartPointX.setEnabled(false);
+		m_StartPointY.setEnabled(false);
+		m_EndPointX.setEnabled(false);
+		m_EndPointY.setEnabled(false);
+		revalidate();
+	}
+
+	void UnLockTextField() {
+		m_StartPointX.setEnabled(true);
+		m_StartPointY.setEnabled(true);
+		m_EndPointX.setEnabled(true);
+		m_EndPointY.setEnabled(true);
+		revalidate();
 	}
 
 	public void Size(JComponent c, int x, int y) {
