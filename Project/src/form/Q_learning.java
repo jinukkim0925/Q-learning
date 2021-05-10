@@ -146,7 +146,7 @@ public class Q_learning extends JFrame implements Runnable {
 							return;
 						}
 						if (i2 == Rei(m_StartPointX.getText()) && j2 == Rei(m_StartPointY.getText())
-								|| i2 == Rei(m_EndPointX.getText()) && j2 == Rei(m_EndPointX.getText())) {
+								|| i2 == Rei(m_EndPointX.getText()) && j2 == Rei(m_EndPointY.getText())) {
 							Wmsg("출발 및 도착 지점에는 장벽을 세우지 못합니다.");
 							return;
 						}
