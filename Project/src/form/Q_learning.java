@@ -220,6 +220,7 @@ public class Q_learning extends JFrame implements Runnable {
 
 		stopQ.addActionListener(e -> { // 강화 학습 중단
 			UnLockTextField();
+			m_errcnt = 0;
 			run = false;
 			th = new Thread(this);
 		});
